@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Image, Video, X } from 'lucide-react';
+import { Image, VideoCamera, X } from '@phosphor-icons/react';
 import api from '../api';
 import { toast } from 'sonner';
 
 const CreatePostModal = ({ open, onOpenChange, onPostCreated }) => {
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
@@ -49,7 +51,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated }) => {
       };
 
       const res = await api.post('/posts', postData);
-      toast.success('Post created!');
+      toast.success(t('post.created'));
       onPostCreated?.(res.data);
       setContent('');
       removeMedia();
@@ -63,31 +65,31 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="create-post-modal" className="sm:max-w-[600px]">
+      <DialogContent data-testid="create-post-modal" className="sm:max-w-[600px] glass rounded-3xl border-border/40">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-heading">Create Post</DialogTitle>
+          <DialogTitle className="text-3xl font-heading tracking-tight">{t('feed.createPost')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             data-testid="post-content-input"
-            placeholder="What's on your mind?"
+            placeholder={t('post.whatsOnMind')}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[120px] resize-none rounded-xl"
+            className="min-h-[120px] resize-none rounded-2xl bg-muted/50 border-border focus:border-primary"
           />
 
           {mediaPreview && (
-            <div className="relative rounded-xl overflow-hidden">
+            <div className="relative rounded-2xl overflow-hidden">
               <Button
                 data-testid="remove-media-btn"
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute top-2 right-2 z-10 rounded-full"
+                className="absolute top-2 right-2 z-10 rounded-full hover:scale-110 transition-transform"
                 onClick={removeMedia}
               >
-                <X className="w-4 h-4" />
+                <X size={20} weight="bold" />
               </Button>
               {mediaType?.startsWith('image') ? (
                 <img src={mediaPreview} alt="Preview" className="w-full max-h-80 object-cover" />
@@ -104,20 +106,20 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated }) => {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full hover:scale-110 transition-transform"
                 onClick={() => document.getElementById('image-upload').click()}
               >
-                <Image className="w-5 h-5" />
+                <Image size={20} weight="bold" />
               </Button>
               <Button
                 data-testid="upload-video-btn"
                 type="button"
                 variant="outline"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full hover:scale-110 transition-transform"
                 onClick={() => document.getElementById('video-upload').click()}
               >
-                <Video className="w-5 h-5" />
+                <VideoCamera size={20} weight="bold" />
               </Button>
 
               <input
@@ -140,9 +142,9 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated }) => {
               data-testid="submit-post-btn"
               type="submit"
               disabled={loading || !content.trim()}
-              className="rounded-full px-6"
+              className="rounded-full px-6 hover:scale-105 transition-transform active:scale-95"
             >
-              {loading ? 'Posting...' : 'Post'}
+              {loading ? t('post.posting') : t('post.post')}
             </Button>
           </div>
         </form>

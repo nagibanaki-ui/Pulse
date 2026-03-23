@@ -64,17 +64,30 @@
     }
 }
 
-/* Hide Emergent watermark */
-a[href*="emergent.sh"],
-[href*="emergentagent.com"] img,
+/* Hide Emergent watermark - COMPREHENSIVE */
+a[href*="emergent"],
+[href*="emergent"] *,
 div[style*="position: fixed"][style*="bottom"][style*="right"],
+div[style*="position: fixed"][style*="z-index"],
 .emergent-badge,
-[class*="emergent"][class*="badge"],
-[data-emergent-badge] {
+[class*="emergent"],
+[data-emergent-badge],
+[data-emergent],
+iframe[src*="emergent"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* Additional watermark hiding */
+body > div:last-child[style*="fixed"],
+body > a:last-child[style*="fixed"] {
+    display: none !important;
 }
 
 /* Noise texture overlay */
