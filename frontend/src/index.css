@@ -122,14 +122,27 @@ body::before {
     @apply bg-primary/50;
 }
 
-/* Avatar proper aspect ratio */
+/* Avatar proper aspect ratio - COMPREHENSIVE FIX */
 .avatar-img,
 img[alt*="avatar"],
 img[alt*="Avatar"],
-[class*="avatar"] img {
+[class*="avatar"] img,
+[data-radix-avatar-image] {
     object-fit: cover !important;
     width: 100% !important;
     height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+}
+
+/* Avatar containers - Force circular */
+[data-radix-avatar],
+span[class*="Avatar"] {
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 9999px !important;
+    overflow: hidden !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* Glass morphism utility */
