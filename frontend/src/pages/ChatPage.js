@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PaperPlaneTilt, Phone, VideoCamera, ArrowLeft, PhoneDisconnect } from '@phosphor-icons/react';
+import { PaperPlaneTilt, Phone, ArrowLeft, PhoneDisconnect } from '@phosphor-icons/react';
 import io from 'socket.io-client';
 import Navbar from '../components/Navbar';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
@@ -23,31 +23,26 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [showCallModal, setShowCallModal] = useState(false);
-  const [callType, setCallType] = useState(null);
   const [incomingCall, setIncomingCall] = useState(null);
   const [isInCall, setIsInCall] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const ringtoneRef = useRef(null);
+  const callTimerRef = useRef(null);
 
   useEffect(() => {
     loadConversations();
     initSocket();
-    initAudio();
-
+    
     return () => {
       if (socketRef.current?.connected) {
         socketRef.current.disconnect();
       }
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      stopRingtone();
+      cleanupCall();
     };
   }, []);
 
@@ -61,28 +56,32 @@ const ChatPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const initAudio = () => {
-    ringtoneRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
-    ringtoneRef.current.loop = true;
-  };
-
-  const playRingtone = () => {
-    try {
-      ringtoneRef.current?.play().catch(() => {});
-    } catch (e) {}
-  };
-
-  const stopRingtone = () => {
-    try {
-      ringtoneRef.current?.pause();
-      ringtoneRef.current.currentTime = 0;
-    } catch (e) {}
-  };
+  useEffect(() => {
+    if (isInCall) {
+      callTimerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+      }
+      setCallDuration(0);
+    }
+    return () => {
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+      }
+    };
+  }, [isInCall]);
 
   const initSocket = () => {
-    socketRef.current = io(BACKEND_URL, { path: '/api/socket.io' });
+    socketRef.current = io(BACKEND_URL, { 
+      path: '/api/socket.io',
+      transports: ['websocket', 'polling']
+    });
 
     socketRef.current.on('connect', () => {
+      console.log('Socket connected');
       if (user) {
         socketRef.current.emit('join_room', { user_id: user.id });
       }
@@ -95,21 +94,66 @@ const ChatPage = () => {
     });
 
     socketRef.current.on('call_signal', async (data) => {
+      console.log('Received call signal:', data.signal?.type);
+      
       if (data.signal.type === 'offer') {
-        setIncomingCall({ callerId: data.caller_id, signal: data.signal });
+        setIncomingCall({ 
+          callerId: data.caller_id, 
+          signal: data.signal,
+          callerName: data.caller_name 
+        });
         playRingtone();
       } else if (data.signal.type === 'answer') {
-        if (peerConnectionRef.current) {
-          await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.signal));
-          setIsInCall(true);
-          stopRingtone();
+        try {
+          if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
+            await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.signal));
+            console.log('Remote description set (answer)');
+            setIsInCall(true);
+            stopRingtone();
+            toast.success('Call connected!');
+          }
+        } catch (err) {
+          console.error('Error setting remote description:', err);
         }
       } else if (data.signal.candidate) {
-        if (peerConnectionRef.current) {
-          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.signal));
+        try {
+          if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
+            await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.signal));
+            console.log('ICE candidate added');
+          }
+        } catch (err) {
+          console.error('Error adding ICE candidate:', err);
         }
       }
     });
+
+    socketRef.current.on('call_ended', () => {
+      endCall();
+      toast.info('Call ended');
+    });
+  };
+
+  const playRingtone = () => {
+    try {
+      if (!ringtoneRef.current) {
+        ringtoneRef.current = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+        ringtoneRef.current.loop = true;
+      }
+      ringtoneRef.current.play().catch(console.error);
+    } catch (e) {
+      console.error('Ringtone error:', e);
+    }
+  };
+
+  const stopRingtone = () => {
+    try {
+      if (ringtoneRef.current) {
+        ringtoneRef.current.pause();
+        ringtoneRef.current.currentTime = 0;
+      }
+    } catch (e) {
+      console.error('Stop ringtone error:', e);
+    }
   };
 
   const loadConversations = async () => {
@@ -117,7 +161,7 @@ const ChatPage = () => {
       const res = await api.get('/conversations');
       setConversations(res.data);
     } catch (err) {
-      toast.error('Failed to load conversations');
+      console.error('Load conversations error:', err);
     }
   };
 
@@ -172,32 +216,43 @@ const ChatPage = () => {
     }
   };
 
-  const startCall = async (type) => {
-    setCallType(type);
+  const startCall = async () => {
+    if (!selectedConv) return;
+    
     setShowCallModal(true);
     playRingtone();
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: type === 'video',
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
       });
+      
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+      console.log('Local stream obtained');
 
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
       });
+      
       peerConnectionRef.current = pc;
 
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+        console.log('Track added:', track.kind);
+      });
 
       pc.ontrack = (event) => {
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-        }
+        console.log('Remote track received');
+        const audio = new Audio();
+        audio.srcObject = event.streams[0];
+        audio.play().catch(console.error);
       };
 
       pc.onicecandidate = (event) => {
@@ -205,30 +260,49 @@ const ChatPage = () => {
           socketRef.current.emit('call_signal', {
             target_user_id: selectedConv.other_user.id,
             caller_id: user.id,
+            caller_name: user.username,
             signal: { candidate: event.candidate },
           });
         }
       };
 
+      pc.oniceconnectionstatechange = () => {
+        console.log('ICE connection state:', pc.iceConnectionState);
+        if (pc.iceConnectionState === 'connected') {
+          setIsInCall(true);
+          stopRingtone();
+          toast.success('Call connected!');
+        } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+          endCall();
+        }
+      };
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      console.log('Offer created');
 
       if (socketRef.current?.connected) {
         socketRef.current.emit('call_signal', {
           target_user_id: selectedConv.other_user.id,
           caller_id: user.id,
+          caller_name: user.username,
           signal: offer,
         });
       }
     } catch (err) {
-      toast.error('Failed to start call');
+      toast.error('Microphone access denied or unavailable');
+      console.error('Start call error:', err);
       stopRingtone();
+      setShowCallModal(false);
     }
   };
 
-  const endCall = () => {
+  const cleanupCall = () => {
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        console.log('Track stopped:', track.kind);
+      });
       localStreamRef.current = null;
     }
     if (peerConnectionRef.current) {
@@ -236,35 +310,56 @@ const ChatPage = () => {
       peerConnectionRef.current = null;
     }
     stopRingtone();
+  };
+
+  const endCall = () => {
+    cleanupCall();
     setShowCallModal(false);
-    setCallType(null);
     setIsInCall(false);
+    setCallDuration(0);
+    
+    if (socketRef.current?.connected && selectedConv) {
+      socketRef.current.emit('call_ended', {
+        target_user_id: selectedConv.other_user.id
+      });
+    }
   };
 
   const answerCall = async () => {
     if (!incomingCall) return;
+    
     stopRingtone();
-    setCallType('video');
     setShowCallModal(true);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
 
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
       });
+      
       peerConnectionRef.current = pc;
 
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
 
       pc.ontrack = (event) => {
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-        }
+        console.log('Remote track received');
+        const audio = new Audio();
+        audio.srcObject = event.streams[0];
+        audio.play().catch(console.error);
       };
 
       pc.onicecandidate = (event) => {
@@ -274,6 +369,14 @@ const ChatPage = () => {
             caller_id: user.id,
             signal: { candidate: event.candidate },
           });
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log('ICE connection state:', pc.iceConnectionState);
+        if (pc.iceConnectionState === 'connected') {
+          setIsInCall(true);
+          toast.success('Call connected!');
         }
       };
 
@@ -289,25 +392,35 @@ const ChatPage = () => {
         });
       }
 
-      setIsInCall(true);
       setIncomingCall(null);
     } catch (err) {
-      toast.error('Failed to answer call');
+      toast.error('Microphone access denied');
+      console.error('Answer call error:', err);
+      setIncomingCall(null);
     }
   };
 
   const declineCall = () => {
     stopRingtone();
     setIncomingCall(null);
+    if (socketRef.current?.connected && incomingCall) {
+      socketRef.current.emit('call_ended', {
+        target_user_id: incomingCall.callerId
+      });
+    }
   };
 
-  // Instagram-style: Show either conversation list OR chat thread (full screen)
+  const formatCallDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div data-testid="chat-page" className="h-screen flex flex-col bg-background">
       <Navbar />
 
       {!selectedConv ? (
-        // Conversations List - Full Screen
         <div className="flex-1 overflow-hidden">
           <div className="max-w-2xl mx-auto h-full flex flex-col">
             <div className="p-6 border-b border-border">
@@ -332,7 +445,7 @@ const ChatPage = () => {
                     className="p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50 flex items-center gap-4"
                   >
                     <Avatar className="w-14 h-14">
-                      <AvatarImage src={conv.other_user?.avatar_url} alt="avatar" style={{ objectFit: 'cover' }} />
+                      <AvatarImage src={conv.other_user?.avatar_url} alt="avatar" />
                       <AvatarFallback>{conv.other_user?.username?.[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -346,23 +459,20 @@ const ChatPage = () => {
           </div>
         </div>
       ) : (
-        // Chat Thread - Full Screen
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="max-w-2xl mx-auto w-full h-full flex flex-col">
-            {/* Header */}
             <div className="p-4 border-b border-border flex items-center gap-4">
               <Button
                 data-testid="back-to-conversations-btn"
                 variant="ghost"
                 size="icon"
                 onClick={() => setSelectedConv(null)}
-                className="hover:bg-transparent"
               >
-                <ArrowLeft size={24} weight="regular" />
+                <ArrowLeft size={24} />
               </Button>
 
               <Avatar className="w-10 h-10">
-                <AvatarImage src={selectedConv.other_user?.avatar_url} alt="avatar" style={{ objectFit: 'cover' }} />
+                <AvatarImage src={selectedConv.other_user?.avatar_url} alt="avatar" />
                 <AvatarFallback>{selectedConv.other_user?.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
 
@@ -372,29 +482,17 @@ const ChatPage = () => {
                 </p>
               </div>
 
-              <div className="flex gap-2">
-                <Button
-                  data-testid="audio-call-btn"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => startCall('audio')}
-                  className="hover:bg-transparent"
-                >
-                  <Phone size={24} weight="regular" />
-                </Button>
-                <Button
-                  data-testid="video-call-btn"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => startCall('video')}
-                  className="hover:bg-transparent"
-                >
-                  <VideoCamera size={24} weight="regular" />
-                </Button>
-              </div>
+              <Button
+                data-testid="audio-call-btn"
+                variant="ghost"
+                size="icon"
+                onClick={startCall}
+                className="hover:bg-primary/10"
+              >
+                <Phone size={24} weight="regular" />
+              </Button>
             </div>
 
-            {/* Messages */}
             <div data-testid="messages-container" className="flex-1 overflow-y-auto p-4 space-y-2">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
@@ -422,7 +520,6 @@ const ChatPage = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <form onSubmit={sendMessage} className="p-4 border-t border-border">
               <div className="flex gap-2 items-center">
                 <Input
@@ -431,14 +528,13 @@ const ChatPage = () => {
                   placeholder={`Message ${selectedConv.other_user?.username}...`}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  className="flex-1 rounded-full border-border"
+                  className="flex-1 rounded-full border-border bg-muted/50"
                 />
                 <Button
                   data-testid="send-message-btn"
                   type="submit"
                   disabled={!messageText.trim()}
                   variant="ghost"
-                  className="hover:bg-transparent"
                 >
                   <PaperPlaneTilt size={24} weight={messageText.trim() ? 'fill' : 'regular'} />
                 </Button>
@@ -448,115 +544,87 @@ const ChatPage = () => {
         </div>
       )}
 
-      {/* Call Modal */}
-      <Dialog open={showCallModal} onOpenChange={setShowCallModal}>
-        <DialogContent data-testid="call-modal" className="max-w-4xl rounded-3xl border-primary/40">
-          <div className="relative">
-            {!isInCall && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md animate-pulse">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-ping"></div>
-                  <p className="text-sm font-medium">{t('chat.calling')}</p>
-                </div>
+      {/* Audio Call Modal with Beautiful Animations */}
+      <Dialog open={showCallModal} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md bg-gradient-blue-green border-none rounded-3xl">
+          <div className="py-8 px-4 text-center text-white">
+            {/* Avatar with pulse rings */}
+            <div className="relative inline-block mb-6">
+              {!isInCall && (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-white/20 pulse-ring"></div>
+                  <div className="absolute inset-0 rounded-full bg-white/10 pulse-ring" style={{ animationDelay: '0.5s' }}></div>
+                </>
+              )}
+              <Avatar className="w-24 h-24 relative z-10 ring-4 ring-white/30">
+                <AvatarImage src={selectedConv?.other_user?.avatar_url} alt="avatar" />
+                <AvatarFallback className="text-2xl bg-white/20">
+                  {selectedConv?.other_user?.username?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* User info */}
+            <h2 className="text-2xl font-bold mb-2">{selectedConv?.other_user?.username}</h2>
+            <p className="text-white/80 mb-6">
+              {isInCall ? formatCallDuration(callDuration) : t('chat.calling')}
+            </p>
+
+            {/* Sound waves during call */}
+            {isInCall && (
+              <div className="flex justify-center gap-1 mb-6">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 h-8 bg-white/60 rounded-full wave-bar"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  ></div>
+                ))}
               </div>
             )}
 
+            {/* End call button */}
             <Button
               data-testid="end-call-btn"
-              variant="destructive"
-              size="icon"
-              className="absolute top-4 right-4 z-10 rounded-full"
               onClick={endCall}
+              className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 glow-effect"
             >
-              <PhoneDisconnect size={20} weight="bold" />
+              <PhoneDisconnect size={28} weight="bold" />
             </Button>
-
-            <div className={`grid ${callType === 'video' ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
-              {callType === 'video' && (
-                <>
-                  <div className="bg-black rounded-2xl overflow-hidden aspect-video relative">
-                    <video
-                      data-testid="local-video"
-                      ref={localVideoRef}
-                      autoPlay
-                      muted
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                      <p className="text-white text-sm px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-                        {t('chat.you')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="bg-black rounded-2xl overflow-hidden aspect-video relative">
-                    <video
-                      data-testid="remote-video"
-                      ref={remoteVideoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                      <p className="text-white text-sm px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-                        {selectedConv?.other_user?.username}
-                      </p>
-                    </div>
-                    {!isInCall && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                          <Phone size={40} weight="bold" className="text-primary" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-              {callType === 'audio' && (
-                <div className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-12 flex flex-col items-center justify-center gap-6">
-                  <div className={`w-32 h-32 rounded-full bg-primary/30 flex items-center justify-center ${!isInCall ? 'animate-pulse' : ''}`}>
-                    <Phone size={64} weight="bold" className="text-primary" />
-                  </div>
-                  <p className="text-2xl font-semibold">{selectedConv?.other_user?.username}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {isInCall ? 'In call...' : t('chat.calling')}
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Incoming Call */}
       {incomingCall && (
-        <Dialog open={!!incomingCall} onOpenChange={() => declineCall()}>
-          <DialogContent data-testid="incoming-call-modal" className="rounded-3xl border-primary/40">
-            <div className="text-center space-y-6 py-8">
-              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto animate-pulse">
-                <Phone size={48} weight="bold" className="text-primary" />
+        <Dialog open={!!incomingCall} onOpenChange={declineCall}>
+          <DialogContent className="sm:max-w-md bg-gradient-blue-green border-none rounded-3xl">
+            <div className="py-8 px-4 text-center text-white">
+              <div className="relative inline-block mb-6">
+                <div className="absolute inset-0 rounded-full bg-white/20 pulse-ring"></div>
+                <div className="absolute inset-0 rounded-full bg-white/10 pulse-ring" style={{ animationDelay: '0.5s' }}></div>
+                <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center relative z-10">
+                  <Phone size={48} weight="bold" />
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-semibold mb-2">{t('chat.incomingCall')}</p>
-                <p className="text-muted-foreground">Unknown caller</p>
-              </div>
+
+              <h2 className="text-2xl font-bold mb-2">{incomingCall.callerName || 'Unknown'}</h2>
+              <p className="text-white/80 mb-8">{t('chat.incomingCall')}</p>
+
               <div className="flex gap-4 justify-center">
-                <Button
-                  data-testid="accept-call-btn"
-                  onClick={answerCall}
-                  className="rounded-full px-8 py-6 bg-green-500 hover:bg-green-600"
-                >
-                  <Phone size={24} weight="bold" />
-                  <span className="ml-2">{t('chat.accept')}</span>
-                </Button>
                 <Button
                   data-testid="decline-call-btn"
                   onClick={declineCall}
-                  variant="destructive"
-                  className="rounded-full px-8 py-6"
+                  className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600"
                 >
-                  <PhoneDisconnect size={24} weight="bold" />
-                  <span className="ml-2">{t('chat.decline')}</span>
+                  <PhoneDisconnect size={28} weight="bold" />
+                </Button>
+                <Button
+                  data-testid="accept-call-btn"
+                  onClick={answerCall}
+                  className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 glow-effect"
+                >
+                  <Phone size={28} weight="bold" />
                 </Button>
               </div>
             </div>

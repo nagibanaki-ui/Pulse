@@ -17,11 +17,11 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 bg-background border-b border-border">
+    <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Pulse</span>
+            <span className="text-2xl font-bold tracking-tight gradient-blue-green bg-clip-text text-transparent">Pulse</span>
           </Link>
 
           <div className="flex items-center gap-6">
