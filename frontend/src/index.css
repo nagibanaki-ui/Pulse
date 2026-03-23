@@ -58,22 +58,41 @@
     body {
         @apply bg-background text-foreground font-sans;
         font-feature-settings: "rlig" 1, "calt" 1;
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+    html {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
     }
     h1, h2, h3, h4, h5, h6 {
         @apply font-semibold;
     }
 }
 
-/* Hide Emergent watermark - COMPREHENSIVE */
+#root {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+
+/* Hide Emergent watermark - ULTRA COMPREHENSIVE */
 a[href*="emergent"],
+a[href*="Emergent"],
 [href*="emergent"] *,
-div[style*="position: fixed"][style*="bottom"][style*="right"],
+[href*="Emergent"] *,
+div[style*="position: fixed"][style*="bottom"],
+div[style*="position: fixed"][style*="right"],
 div[style*="position: fixed"][style*="z-index"],
+div[style*="position: absolute"][style*="bottom"],
 .emergent-badge,
 [class*="emergent"],
+[class*="Emergent"],
 [data-emergent-badge],
 [data-emergent],
-iframe[src*="emergent"] {
+iframe[src*="emergent"],
+img[src*="emergent"],
+img[alt*="emergent"],
+img[alt*="Emergent"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -82,15 +101,17 @@ iframe[src*="emergent"] {
     height: 0 !important;
     position: absolute !important;
     left: -9999px !important;
+    top: -9999px !important;
 }
 
-/* Additional watermark hiding */
 body > div:last-child[style*="fixed"],
-body > a:last-child[style*="fixed"] {
+body > a:last-child[style*="fixed"],
+body > div:last-child[style*="absolute"],
+body > a:last-child,
+body > div:last-child > a {
     display: none !important;
 }
 
-/* Custom scrollbar - Instagram style */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -108,7 +129,6 @@ body > a:last-child[style*="fixed"] {
     @apply bg-muted-foreground/50;
 }
 
-/* Avatar proper aspect ratio - COMPREHENSIVE FIX */
 .avatar-img,
 img[alt*="avatar"],
 img[alt*="Avatar"],
@@ -120,7 +140,6 @@ img[alt*="Avatar"],
     aspect-ratio: 1 / 1 !important;
 }
 
-/* Avatar containers - Force circular */
 [data-radix-avatar],
 span[class*="Avatar"] {
     aspect-ratio: 1 / 1 !important;
@@ -131,7 +150,6 @@ span[class*="Avatar"] {
     justify-content: center !important;
 }
 
-/* Instagram gradient */
 .instagram-gradient {
     background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 }
@@ -151,7 +169,6 @@ span[class*="Avatar"] {
     border-radius: 50%;
 }
 
-/* Animations */
 @keyframes heart-pop {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
