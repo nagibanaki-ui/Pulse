@@ -1,164 +1,224 @@
 {
-  "design_system": {
-    "identity": {
-      "name": "SocialMVP",
-      "tone": "Minimalist, Connected, Fluid",
-      "core_values": ["Clarity", "Speed", "Human-first"]
+  "project_name": "Flux Social MVP",
+  "design_philosophy": {
+    "identity": "Kinetic Flux",
+    "core_principles": [
+      "Fusion: Swiss Grid precision meets Acid Graphics chaos.",
+      "Emotion: Every interaction must feel 'wet' (fluid animations) or 'sharp' (instant feedback).",
+      "Content: User content is the hero; UI is the stage. Use varying aspect ratios.",
+      "Depth: Heavy use of layered glassmorphism and grain to create tactile digital surfaces."
+    ],
+    "anti_patterns": [
+      "No default Shadcn cards (must be customized).",
+      "No flat solid gray backgrounds.",
+      "No generic 'Inter' font for headings.",
+      "No perfect symmetry."
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Syne, sans-serif",
+      "body": "Plus Jakarta Sans, sans-serif",
+      "mono": "JetBrains Mono, monospace"
     },
-    "typography": {
-      "font_family": {
-        "headings": "Manrope, sans-serif",
-        "body": "Inter, sans-serif",
-        "mono": "JetBrains Mono, monospace"
+    "imports": [
+      "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    ],
+    "usage_rules": {
+      "h1": "font-heading font-extrabold text-5xl md:text-7xl tracking-tighter leading-none uppercase",
+      "h2": "font-heading font-bold text-3xl md:text-5xl tracking-tight",
+      "h3": "font-heading font-semibold text-2xl tracking-tight",
+      "body": "font-sans text-base leading-relaxed",
+      "caption": "font-mono text-xs uppercase tracking-widest opacity-60"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Electric Violet",
+        "hex": "#7C3AED",
+        "tailwind": "violet-600",
+        "foreground": "#FFFFFF"
       },
-      "scale": {
-        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
-        "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
-        "h3": "text-2xl font-semibold",
-        "h4": "text-xl font-medium",
-        "body_lg": "text-lg leading-relaxed",
-        "body_base": "text-base leading-relaxed",
-        "body_sm": "text-sm text-muted-foreground",
-        "caption": "text-xs text-muted-foreground uppercase tracking-wider"
+      "secondary": {
+        "name": "Acid Lime",
+        "hex": "#CCFF00",
+        "tailwind": "lime-400",
+        "foreground": "#000000"
+      },
+      "background": {
+        "light": "#F8F9FA",
+        "dark": "#050505"
+      },
+      "surface": {
+        "light": "#FFFFFF",
+        "dark": "#121212"
       }
     },
-    "colors": {
-      "theme_strategy": "light_default_with_dark_toggle",
-      "palette": {
-        "primary": {
-          "DEFAULT": "#6366f1",
-          "hover": "#4f46e5",
-          "foreground": "#ffffff",
-          "light": "#e0e7ff"
-        },
-        "secondary": {
-          "DEFAULT": "#f1f5f9",
-          "foreground": "#0f172a"
-        },
-        "background": {
-          "light": "#ffffff",
-          "subtle": "#f8fafc",
-          "dark": "#020617",
-          "dark_subtle": "#0f172a"
-        },
-        "surface": {
-          "light": "#ffffff",
-          "dark": "#1e293b"
-        },
-        "text": {
-          "primary": "#0f172a",
-          "secondary": "#64748b",
-          "dark_primary": "#f8fafc",
-          "dark_secondary": "#94a3b8"
-        },
-        "status": {
-          "success": "#22c55e",
-          "error": "#ef4444",
-          "warning": "#f59e0b",
-          "info": "#3b82f6"
-        }
-      }
-    },
-    "layout": {
-      "spacing_scale": "generous",
-      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
-      "grid_strategy": {
-        "feed": "grid grid-cols-1 md:grid-cols-12 gap-6",
-        "sidebar_left": "hidden md:block md:col-span-3 lg:col-span-2 sticky top-20 h-[calc(100vh-5rem)]",
-        "main_content": "col-span-1 md:col-span-9 lg:col-span-6 space-y-6",
-        "sidebar_right": "hidden lg:block lg:col-span-4 sticky top-20 h-[calc(100vh-5rem)]"
+    "css_vars": {
+      "light": {
+        "--background": "210 20% 98%",
+        "--foreground": "240 10% 3.9%",
+        "--primary": "262 80% 50%",
+        "--primary-foreground": "210 20% 98%",
+        "--secondary": "84 100% 50%",
+        "--secondary-foreground": "240 10% 3.9%",
+        "--muted": "240 4.8% 95.9%",
+        "--muted-foreground": "240 3.8% 46.1%",
+        "--accent": "240 4.8% 95.9%",
+        "--accent-foreground": "240 5.9% 10%",
+        "--border": "240 5.9% 90%"
       },
-      "border_radius": {
-        "card": "rounded-2xl",
-        "button": "rounded-full",
-        "input": "rounded-xl"
-      }
-    },
-    "components": {
-      "buttons": {
-        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all active:scale-95",
-        "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all active:scale-95",
-        "ghost": "hover:bg-accent hover:text-accent-foreground transition-all",
-        "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      },
-      "cards": {
-        "base": "bg-card text-card-foreground rounded-2xl border border-border/40 shadow-sm hover:shadow-md transition-shadow duration-200",
-        "interactive": "cursor-pointer hover:border-primary/20"
-      },
-      "inputs": {
-        "base": "h-11 rounded-xl border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      }
-    },
-    "visual_enhancers": {
-      "shadows": {
-        "soft": "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
-        "floating": "0 10px 40px -10px rgba(0, 0, 0, 0.1)"
-      },
-      "glassmorphism": {
-        "nav": "bg-background/80 backdrop-blur-md border-b border-border/40 supports-[backdrop-filter]:bg-background/60",
-        "overlay": "bg-black/20 backdrop-blur-sm"
-      },
-      "animations": {
-        "micro_interaction": "transition-transform duration-200 ease-out hover:scale-105",
-        "fade_in": "animate-in fade-in zoom-in-95 duration-300",
-        "slide_up": "animate-in slide-in-from-bottom-4 duration-500"
-      }
-    },
-    "assets": {
-      "image_urls": {
-        "avatars": [
-          "https://images.unsplash.com/photo-1607639106901-28314a0a622e?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
-          "https://images.unsplash.com/photo-1652772589253-c1ab2308fbf4?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
-          "https://images.unsplash.com/photo-1650213236604-6dd826c965c0?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
-          "https://images.pexels.com/photos/7578251/pexels-photo-7578251.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
-        ],
-        "posts": [
-          "https://images.unsplash.com/photo-1636717970273-0a0511ad8cf8?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
-          "https://images.unsplash.com/photo-1545731939-9c302d5d27ed?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
-          "https://images.unsplash.com/photo-1729179866543-ec17ffb7685d?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
-          "https://images.pexels.com/photos/6599/coffee-apple-iphone-desk.jpg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
-        ]
-      },
-      "icons": {
-        "library": "lucide-react",
-        "style": "stroke-width={1.5} className='w-5 h-5'"
+      "dark": {
+        "--background": "240 10% 3.9%",
+        "--foreground": "0 0% 98%",
+        "--primary": "263 70% 50%",
+        "--primary-foreground": "0 0% 98%",
+        "--secondary": "84 100% 50%",
+        "--secondary-foreground": "240 10% 3.9%",
+        "--muted": "240 3.7% 15.9%",
+        "--muted-foreground": "240 5% 64.9%",
+        "--accent": "240 3.7% 15.9%",
+        "--accent-foreground": "0 0% 98%",
+        "--border": "240 3.7% 15.9%"
       }
     }
   },
-  "page_specifics": {
+  "layout_strategy": {
+    "grid_system": "Bento Grid Protocol",
+    "container_padding": "p-4 md:p-8 lg:p-12",
+    "spacing_scale": "Relaxed (2x standard)",
+    "rules": [
+      "Use 'grid-cols-1 md:grid-cols-12' for main layouts.",
+      "Sidebar: col-span-3 (sticky). Feed: col-span-6. Right-panel: col-span-3.",
+      "Mobile: Single column, bottom navigation bar.",
+      "Asymmetry: Avoid perfect 50/50 splits. Use 60/40 or 70/30."
+    ]
+  },
+  "component_styles": {
+    "buttons": {
+      "default": "rounded-full font-bold tracking-wide transition-transform active:scale-95 hover:shadow-[0_0_20px_rgba(124,58,237,0.5)]",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90",
+      "ghost": "hover:bg-accent hover:text-accent-foreground backdrop-blur-sm"
+    },
+    "cards": {
+      "glass": "bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg rounded-3xl",
+      "solid": "bg-card text-card-foreground border border-border shadow-sm rounded-2xl"
+    },
+    "inputs": {
+      "style": "bg-transparent border-b-2 border-border focus:border-primary rounded-none px-0 py-4 focus:ring-0 transition-colors text-lg placeholder:text-muted-foreground/50"
+    },
+    "avatars": {
+      "shape": "rounded-full border-2 border-background ring-2 ring-primary/20",
+      "sizes": {
+        "sm": "h-8 w-8",
+        "md": "h-12 w-12",
+        "lg": "h-24 w-24",
+        "xl": "h-32 w-32"
+      }
+    }
+  },
+  "visual_enhancers": {
+    "texture": "Overlay a fixed 'noise' texture on the body (opacity 0.03) to reduce digital flatness.",
+    "gradients": "Use 'conic-gradient' for borders or loading states.",
+    "shadows": "Colored shadows matching the element's hue (e.g., purple button = purple glow).",
+    "motion": {
+      "hover": "transform -translate-y-1",
+      "tap": "transform scale-0.95",
+      "page_enter": "animate-in fade-in slide-in-from-bottom-4 duration-500"
+    }
+  },
+  "image_assets": {
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1766964855974-1dfcf5107823?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwzfHxhcnRpc3RpYyUyMHBvcnRyYWl0JTIweW91bmclMjBhZHVsdHxlbnwwfHx8fDE3NzQzMDMxODR8MA&ixlib=rb-4.1.0&q=85",
+        "category": "user_avatar_female_bw",
+        "desc": "Black and white artistic portrait"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1772311992748-57ec07ee2e05?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxhcnRpc3RpYyUyMHBvcnRyYWl0JTIweW91bmclMjBhZHVsdHxlbnwwfHx8fDE3NzQzMDMxODR8MA&ixlib=rb-4.1.0&q=85",
+        "category": "user_avatar_female_hoodie",
+        "desc": "Casual hoodie portrait"
+      },
+      {
+        "url": "https://images.pexels.com/photos/354951/pexels-photo-354951.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "user_avatar_fashion",
+        "desc": "Fashionable portrait with glasses"
+      }
+    ],
+    "backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1618181429758-58eea727110c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTN8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGFlc3RoZXRpYyUyMGdyYWRpZW50JTIwdGV4dHVyZXxlbnwwfHx8fDE3NzQzMDMxODV8MA&ixlib=rb-4.1.0&q=85",
+        "category": "hero_bg_abstract",
+        "desc": "Green and blue liquid abstract"
+      },
+      {
+        "url": "https://images.pexels.com/photos/7135037/pexels-photo-7135037.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "auth_bg_gradient",
+        "desc": "Dynamic blue and red gradient"
+      }
+    ],
+    "posts": [
+      {
+        "url": "https://images.unsplash.com/photo-1586278591408-22bc58549a84?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwxfHx1cmJhbiUyMGFlc3RoZXRpYyUyMGxpZmVzdHlsZSUyMG1pbmltYWx8ZW58MHx8fHwxNzc0MzAzMTg2fDA&ixlib=rb-4.1.0&q=85",
+        "category": "post_lifestyle_urban",
+        "desc": "Urban walking shot"
+      },
+      {
+        "url": "https://images.pexels.com/photos/3028961/pexels-photo-3028961.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "post_minimal_arch",
+        "desc": "Pink minimalist wall"
+      }
+    ]
+  },
+  "ui_components_map": {
+    "auth": {
+      "wrapper": "flex h-screen w-full bg-cover bg-center",
+      "card": "m-auto w-full max-w-md bg-white/10 backdrop-blur-2xl border border-white/20 p-8 rounded-3xl shadow-2xl"
+    },
     "feed": {
-      "layout": "single_column_feed_with_sidebars",
-      "features": ["infinite_scroll", "skeleton_loading", "image_lightbox"]
+      "post_container": "mb-8 bg-card rounded-3xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow",
+      "media_aspect": "aspect-[4/5] or aspect-square object-cover w-full"
     },
     "chat": {
-      "layout": "split_view_sidebar_and_chat_window",
-      "style": "clean_bubbles_no_borders",
-      "features": ["typing_indicators", "read_receipts", "voice_waveforms"]
+      "bubble_me": "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm p-4 max-w-[80%]",
+      "bubble_them": "bg-muted text-foreground rounded-2xl rounded-tl-sm p-4 max-w-[80%]",
+      "container": "h-[calc(100vh-theme(spacing.20))] flex flex-col"
     },
-    "call": {
-      "layout": "fullscreen_overlay",
-      "style": "floating_controls_bottom_center",
-      "video_grid": "responsive_grid_auto_fit"
+    "call_interface": {
+      "overlay": "fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center",
+      "video_main": "w-full h-full object-cover",
+      "video_pip": "absolute top-4 right-4 w-32 h-48 bg-gray-800 rounded-xl border-2 border-white/20 shadow-2xl object-cover",
+      "controls": "absolute bottom-8 flex gap-6 p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/10"
     }
   },
-  "implementation_instructions": {
-    "universal_guidelines": [
-      "Use 'Manrope' for all headings to give a distinct modern feel.",
-      "Use 'Inter' for body text for maximum legibility.",
-      "Ensure all interactive elements have a hover state.",
-      "Use 'sonner' for toast notifications.",
-      "Implement Dark Mode toggle in Settings.",
-      "Use Lucide React for icons.",
-      "Add 'data-testid' to all interactive elements."
-    ],
-    "shadcn_customizations": [
-      "Override default radius to '0.75rem' (rounded-xl) or '1rem' (rounded-2xl).",
-      "Set primary color to Indigo-500 (#6366f1)."
-    ],
-    "motion_guidelines": [
-      "Use 'framer-motion' for complex layout transitions.",
-      "Use CSS transitions for simple hover states.",
-      "Implement a 'Like' animation (heart pop)."
-    ]
-  }
+  "libraries": {
+    "icons": "lucide-react (default), @phosphor-icons/react (for bold weight)",
+    "motion": "framer-motion",
+    "toast": "sonner",
+    "utils": "clsx, tailwind-merge"
+  },
+  "accessibility_checklist": [
+    "Ensure contrast ratio of 4.5:1 for normal text.",
+    "Interactive elements must have 'data-testid'.",
+    "Focus rings must be visible (use ring-offset-2).",
+    "Images must have 'alt' tags."
+  ],
+  "instructions_to_main_agent": [
+    "1. UPDATE tailwind.config.js first to include new fonts and colors.",
+    "2. INSTALL dependencies: @phosphor-icons/react, framer-motion.",
+    "3. CREATE the global CSS variables in index.css matching the 'Kinetic Flux' theme.",
+    "4. BUILD reusable 'GlassCard' and 'GradientButton' components before starting pages.",
+    "5. USE the provided image URLs for seeding the database or initial static props.",
+    "6. ENSURE the layout is responsive: Mobile Bottom Nav -> Desktop Sidebar.",
+    "7. IMPLEMENT 'Settings' with Theme Toggle using the 'next-themes' or custom context logic provided in shadcn.",
+    "8. For WebRTC, design the call interface to be floating or full-screen modal, not inline."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for text (accessibility nightmare).",
+    "Avoid 'lorem ipsum' where possible; use realistic placeholder text.",
+    "All avatars must be 'object-cover' to prevent stretching.",
+    "Use 'gap-6' or 'gap-8' for feed items to allow breathing room.",
+    "Add 'active:scale-95' to all interactive elements for tactile feel."
+  ]
 }
