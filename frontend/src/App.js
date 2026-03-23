@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ThemeProvider } from './ThemeContext';
+import './i18n';
 import AuthPage from './pages/AuthPage';
 import FeedPage from './pages/FeedPage';
 import ProfilePage from './pages/ProfilePage';
@@ -16,7 +17,9 @@ const PrivateRoute = ({ children }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="glow-pulse">
+          <p className="text-muted-foreground font-heading text-xl">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -30,7 +33,9 @@ const PublicRoute = ({ children }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="glow-pulse">
+          <p className="text-muted-foreground font-heading text-xl">Loading...</p>
+        </div>
       </div>
     );
   }
