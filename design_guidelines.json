@@ -1,0 +1,164 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "SocialMVP",
+      "tone": "Minimalist, Connected, Fluid",
+      "core_values": ["Clarity", "Speed", "Human-first"]
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Manrope, sans-serif",
+        "body": "Inter, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
+        "h3": "text-2xl font-semibold",
+        "h4": "text-xl font-medium",
+        "body_lg": "text-lg leading-relaxed",
+        "body_base": "text-base leading-relaxed",
+        "body_sm": "text-sm text-muted-foreground",
+        "caption": "text-xs text-muted-foreground uppercase tracking-wider"
+      }
+    },
+    "colors": {
+      "theme_strategy": "light_default_with_dark_toggle",
+      "palette": {
+        "primary": {
+          "DEFAULT": "#6366f1",
+          "hover": "#4f46e5",
+          "foreground": "#ffffff",
+          "light": "#e0e7ff"
+        },
+        "secondary": {
+          "DEFAULT": "#f1f5f9",
+          "foreground": "#0f172a"
+        },
+        "background": {
+          "light": "#ffffff",
+          "subtle": "#f8fafc",
+          "dark": "#020617",
+          "dark_subtle": "#0f172a"
+        },
+        "surface": {
+          "light": "#ffffff",
+          "dark": "#1e293b"
+        },
+        "text": {
+          "primary": "#0f172a",
+          "secondary": "#64748b",
+          "dark_primary": "#f8fafc",
+          "dark_secondary": "#94a3b8"
+        },
+        "status": {
+          "success": "#22c55e",
+          "error": "#ef4444",
+          "warning": "#f59e0b",
+          "info": "#3b82f6"
+        }
+      }
+    },
+    "layout": {
+      "spacing_scale": "generous",
+      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "grid_strategy": {
+        "feed": "grid grid-cols-1 md:grid-cols-12 gap-6",
+        "sidebar_left": "hidden md:block md:col-span-3 lg:col-span-2 sticky top-20 h-[calc(100vh-5rem)]",
+        "main_content": "col-span-1 md:col-span-9 lg:col-span-6 space-y-6",
+        "sidebar_right": "hidden lg:block lg:col-span-4 sticky top-20 h-[calc(100vh-5rem)]"
+      },
+      "border_radius": {
+        "card": "rounded-2xl",
+        "button": "rounded-full",
+        "input": "rounded-xl"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all active:scale-95",
+        "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all active:scale-95",
+        "ghost": "hover:bg-accent hover:text-accent-foreground transition-all",
+        "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      },
+      "cards": {
+        "base": "bg-card text-card-foreground rounded-2xl border border-border/40 shadow-sm hover:shadow-md transition-shadow duration-200",
+        "interactive": "cursor-pointer hover:border-primary/20"
+      },
+      "inputs": {
+        "base": "h-11 rounded-xl border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      }
+    },
+    "visual_enhancers": {
+      "shadows": {
+        "soft": "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
+        "floating": "0 10px 40px -10px rgba(0, 0, 0, 0.1)"
+      },
+      "glassmorphism": {
+        "nav": "bg-background/80 backdrop-blur-md border-b border-border/40 supports-[backdrop-filter]:bg-background/60",
+        "overlay": "bg-black/20 backdrop-blur-sm"
+      },
+      "animations": {
+        "micro_interaction": "transition-transform duration-200 ease-out hover:scale-105",
+        "fade_in": "animate-in fade-in zoom-in-95 duration-300",
+        "slide_up": "animate-in slide-in-from-bottom-4 duration-500"
+      }
+    },
+    "assets": {
+      "image_urls": {
+        "avatars": [
+          "https://images.unsplash.com/photo-1607639106901-28314a0a622e?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
+          "https://images.unsplash.com/photo-1652772589253-c1ab2308fbf4?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
+          "https://images.unsplash.com/photo-1650213236604-6dd826c965c0?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
+          "https://images.pexels.com/photos/7578251/pexels-photo-7578251.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+        ],
+        "posts": [
+          "https://images.unsplash.com/photo-1636717970273-0a0511ad8cf8?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
+          "https://images.unsplash.com/photo-1545731939-9c302d5d27ed?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
+          "https://images.unsplash.com/photo-1729179866543-ec17ffb7685d?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85",
+          "https://images.pexels.com/photos/6599/coffee-apple-iphone-desk.jpg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+        ]
+      },
+      "icons": {
+        "library": "lucide-react",
+        "style": "stroke-width={1.5} className='w-5 h-5'"
+      }
+    }
+  },
+  "page_specifics": {
+    "feed": {
+      "layout": "single_column_feed_with_sidebars",
+      "features": ["infinite_scroll", "skeleton_loading", "image_lightbox"]
+    },
+    "chat": {
+      "layout": "split_view_sidebar_and_chat_window",
+      "style": "clean_bubbles_no_borders",
+      "features": ["typing_indicators", "read_receipts", "voice_waveforms"]
+    },
+    "call": {
+      "layout": "fullscreen_overlay",
+      "style": "floating_controls_bottom_center",
+      "video_grid": "responsive_grid_auto_fit"
+    }
+  },
+  "implementation_instructions": {
+    "universal_guidelines": [
+      "Use 'Manrope' for all headings to give a distinct modern feel.",
+      "Use 'Inter' for body text for maximum legibility.",
+      "Ensure all interactive elements have a hover state.",
+      "Use 'sonner' for toast notifications.",
+      "Implement Dark Mode toggle in Settings.",
+      "Use Lucide React for icons.",
+      "Add 'data-testid' to all interactive elements."
+    ],
+    "shadcn_customizations": [
+      "Override default radius to '0.75rem' (rounded-xl) or '1rem' (rounded-2xl).",
+      "Set primary color to Indigo-500 (#6366f1)."
+    ],
+    "motion_guidelines": [
+      "Use 'framer-motion' for complex layout transitions.",
+      "Use CSS transitions for simple hover states.",
+      "Implement a 'Like' animation (heart pop)."
+    ]
+  }
+}
