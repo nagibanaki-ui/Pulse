@@ -32,6 +32,7 @@ const ChatPage = () => {
   const messagesEndRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
+  const remoteAudioRef = useRef(null); // Audio element for remote stream
   const ringtoneRef = useRef(null);
   const callTimerRef = useRef(null);
 
@@ -41,6 +42,10 @@ const ChatPage = () => {
     
     // Initialize soft ringtone
     ringtoneRef.current = createSoftRingtone();
+    
+    // Create audio element for remote stream
+    remoteAudioRef.current = new Audio();
+    remoteAudioRef.current.autoplay = true;
     
     return () => {
       if (socketRef.current?.connected) {
@@ -85,7 +90,7 @@ const ChatPage = () => {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('Socket connected');
+      console.log('✓ Socket connected');
       if (user) {
         socketRef.current.emit('join_room', { user_id: user.id });
       }
@@ -98,7 +103,7 @@ const ChatPage = () => {
     });
 
     socketRef.current.on('call_signal', async (data) => {
-      console.log('Received call signal:', data.signal?.type);
+      console.log('📞 Call signal:', data.signal?.type);
       
       if (data.signal.type === 'offer') {
         setIncomingCall({ 
@@ -111,22 +116,19 @@ const ChatPage = () => {
         try {
           if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
             await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.signal));
-            console.log('Remote description set (answer)');
-            setIsInCall(true);
-            stopRingtone();
-            toast.success('Call connected!');
+            console.log('✓ Remote description set (answer)');
           }
         } catch (err) {
-          console.error('Error setting remote description:', err);
+          console.error('❌ Error setting remote description:', err);
         }
       } else if (data.signal.candidate) {
         try {
           if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
             await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.signal));
-            console.log('ICE candidate added');
+            console.log('✓ ICE candidate added');
           }
         } catch (err) {
-          console.error('Error adding ICE candidate:', err);
+          console.error('❌ Error adding ICE candidate:', err);
         }
       }
     });
@@ -224,12 +226,13 @@ const ChatPage = () => {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          sampleRate: 48000
         }
       });
       
       localStreamRef.current = stream;
-      console.log('Local stream obtained');
+      console.log('✓ Local stream obtained');
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -242,14 +245,22 @@ const ChatPage = () => {
 
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
-        console.log('Track added:', track.kind);
+        console.log('✓ Track added:', track.kind);
       });
 
       pc.ontrack = (event) => {
-        console.log('Remote track received');
-        const audio = new Audio();
-        audio.srcObject = event.streams[0];
-        audio.play().catch(console.error);
+        console.log('✓ Remote track received:', event.track.kind);
+        if (remoteAudioRef.current && event.streams[0]) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.play().catch(err => {
+            console.error('Audio play error:', err);
+            // Try to play again after user interaction
+            document.addEventListener('click', () => {
+              remoteAudioRef.current.play().catch(console.error);
+            }, { once: true });
+          });
+          console.log('✓ Remote audio set and playing');
+        }
       };
 
       pc.onicecandidate = (event) => {
@@ -264,12 +275,12 @@ const ChatPage = () => {
       };
 
       pc.oniceconnectionstatechange = () => {
-        console.log('ICE connection state:', pc.iceConnectionState);
+        console.log('🔗 ICE connection state:', pc.iceConnectionState);
         if (pc.iceConnectionState === 'connected') {
           setIsInCall(true);
           stopRingtone();
-          playConnectedSound(); // Soft connected sound
-          toast.success('Call connected!');
+          playConnectedSound();
+          toast.success('🎉 Call connected!');
         } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
           endCall();
         }
@@ -277,7 +288,7 @@ const ChatPage = () => {
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      console.log('Offer created');
+      console.log('✓ Offer created');
 
       if (socketRef.current?.connected) {
         socketRef.current.emit('call_signal', {
@@ -286,9 +297,10 @@ const ChatPage = () => {
           caller_name: user.username,
           signal: offer,
         });
+        console.log('✓ Offer sent');
       }
     } catch (err) {
-      toast.error('Microphone access denied or unavailable');
+      toast.error('Microphone access denied');
       console.error('Start call error:', err);
       stopRingtone();
       setShowCallModal(false);
@@ -302,6 +314,9 @@ const ChatPage = () => {
         console.log('Track stopped:', track.kind);
       });
       localStreamRef.current = null;
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
     }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
@@ -334,7 +349,8 @@ const ChatPage = () => {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          sampleRate: 48000
         }
       });
       
@@ -354,10 +370,16 @@ const ChatPage = () => {
       });
 
       pc.ontrack = (event) => {
-        console.log('Remote track received');
-        const audio = new Audio();
-        audio.srcObject = event.streams[0];
-        audio.play().catch(console.error);
+        console.log('✓ Remote track received (answer)');
+        if (remoteAudioRef.current && event.streams[0]) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.play().catch(err => {
+            console.error('Audio play error:', err);
+            document.addEventListener('click', () => {
+              remoteAudioRef.current.play().catch(console.error);
+            }, { once: true });
+          });
+        }
       };
 
       pc.onicecandidate = (event) => {
@@ -374,6 +396,7 @@ const ChatPage = () => {
         console.log('ICE connection state:', pc.iceConnectionState);
         if (pc.iceConnectionState === 'connected') {
           setIsInCall(true);
+          playConnectedSound();
           toast.success('Call connected!');
         }
       };
@@ -565,7 +588,7 @@ const ChatPage = () => {
             {/* User info */}
             <h2 className="text-2xl font-bold mb-2">{selectedConv?.other_user?.username}</h2>
             <p className="text-white/80 mb-6">
-              {isInCall ? formatCallDuration(callDuration) : t('chat.calling')}
+              {isInCall ? `🔊 ${formatCallDuration(callDuration)}` : t('chat.calling')}
             </p>
 
             {/* Sound waves during call */}
