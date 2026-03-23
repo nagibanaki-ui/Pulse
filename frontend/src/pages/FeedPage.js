@@ -28,6 +28,14 @@ const FeedPage = () => {
 
   useEffect(() => {
     loadPosts();
+    
+    // Check if create modal should be opened
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('create') === 'true') {
+      setShowCreateModal(true);
+      // Clean URL
+      window.history.replaceState({}, '', '/');
+    }
   }, []);
 
   const loadPosts = async () => {
