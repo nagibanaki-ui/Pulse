@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PaperPlaneRight, Microphone, Phone, VideoCamera, X, PhoneDisconnect } from '@phosphor-icons/react';
+import { PaperPlaneTilt, Phone, VideoCamera, ArrowLeft, PhoneDisconnect } from '@phosphor-icons/react';
 import io from 'socket.io-client';
 import Navbar from '../components/Navbar';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
@@ -16,6 +16,7 @@ import { formatDistanceToNow } from 'date-fns';
 const ChatPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
@@ -25,7 +26,6 @@ const ChatPage = () => {
   const [callType, setCallType] = useState(null);
   const [incomingCall, setIncomingCall] = useState(null);
   const [isInCall, setIsInCall] = useState(false);
-  const [callStatus, setCallStatus] = useState('connecting');
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -34,7 +34,6 @@ const ChatPage = () => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const ringtoneRef = useRef(null);
-  const callSoundRef = useRef(null);
 
   useEffect(() => {
     loadConversations();
@@ -63,12 +62,8 @@ const ChatPage = () => {
   }, [messages]);
 
   const initAudio = () => {
-    // Ringtone for incoming calls
     ringtoneRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
     ringtoneRef.current.loop = true;
-    
-    // Call connect sound
-    callSoundRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
   };
 
   const playRingtone = () => {
@@ -81,12 +76,6 @@ const ChatPage = () => {
     try {
       ringtoneRef.current?.pause();
       ringtoneRef.current.currentTime = 0;
-    } catch (e) {}
-  };
-
-  const playCallSound = () => {
-    try {
-      callSoundRef.current?.play().catch(() => {});
     } catch (e) {}
   };
 
@@ -112,10 +101,8 @@ const ChatPage = () => {
       } else if (data.signal.type === 'answer') {
         if (peerConnectionRef.current) {
           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.signal));
-          setCallStatus('connected');
           setIsInCall(true);
           stopRingtone();
-          playCallSound();
         }
       } else if (data.signal.candidate) {
         if (peerConnectionRef.current) {
@@ -139,11 +126,11 @@ const ChatPage = () => {
     if (existing) {
       selectConversation(existing);
     } else {
-      const user = await api.get(`/users/${userId}`);
+      const userRes = await api.get(`/users/${userId}`);
       const newConv = {
         id: `temp-${userId}`,
-        participant_ids: [user.data.id],
-        other_user: user.data,
+        participant_ids: [userRes.data.id],
+        other_user: userRes.data,
       };
       setSelectedConv(newConv);
       setMessages([]);
@@ -188,7 +175,6 @@ const ChatPage = () => {
   const startCall = async (type) => {
     setCallType(type);
     setShowCallModal(true);
-    setCallStatus('connecting');
     playRingtone();
 
     try {
@@ -236,7 +222,6 @@ const ChatPage = () => {
       }
     } catch (err) {
       toast.error('Failed to start call');
-      console.error(err);
       stopRingtone();
     }
   };
@@ -254,16 +239,13 @@ const ChatPage = () => {
     setShowCallModal(false);
     setCallType(null);
     setIsInCall(false);
-    setCallStatus('connecting');
   };
 
   const answerCall = async () => {
     if (!incomingCall) return;
-
     stopRingtone();
     setCallType('video');
     setShowCallModal(true);
-    setCallStatus('connecting');
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -307,13 +289,10 @@ const ChatPage = () => {
         });
       }
 
-      setCallStatus('connected');
       setIsInCall(true);
-      playCallSound();
       setIncomingCall(null);
     } catch (err) {
       toast.error('Failed to answer call');
-      console.error(err);
     }
   };
 
@@ -322,145 +301,157 @@ const ChatPage = () => {
     setIncomingCall(null);
   };
 
+  // Instagram-style: Show either conversation list OR chat thread (full screen)
   return (
-    <div data-testid="chat-page" className="h-screen flex flex-col bg-background overflow-hidden">
+    <div data-testid="chat-page" className="h-screen flex flex-col bg-background">
       <Navbar />
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Conversations List - Fixed Width */}
-        <div className="w-80 border-r border-border flex flex-col bg-card/50">
-          <div className="p-4 border-b border-border">
-            <h2 className="text-2xl font-bold font-heading tracking-tight">{t('chat.messages')}</h2>
-          </div>
+      {!selectedConv ? (
+        // Conversations List - Full Screen
+        <div className="flex-1 overflow-hidden">
+          <div className="max-w-2xl mx-auto h-full flex flex-col">
+            <div className="p-6 border-b border-border">
+              <h1 className="text-2xl font-bold">{user?.username}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{t('chat.messages')}</p>
+            </div>
 
-          <div data-testid="conversations-list" className="flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
-              <div className="text-center py-12 px-4">
-                <p className="text-sm text-muted-foreground">{t('chat.noConversations')}</p>
-              </div>
-            ) : (
-              conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  data-testid={`conversation-${conv.id}`}
-                  onClick={() => selectConversation(conv)}
-                  className={`p-4 cursor-pointer hover:bg-accent/50 transition-colors border-b border-border/50 ${
-                    selectedConv?.id === conv.id ? 'bg-accent' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12 ring-2 ring-primary/20">
-                      <AvatarImage src={conv.other_user?.avatar_url} alt="avatar" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {conv.other_user?.username?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">{conv.other_user?.username}</p>
-                      <p className="text-sm text-muted-foreground truncate">{conv.last_message}</p>
-                    </div>
+            <div data-testid="conversations-list" className="flex-1 overflow-y-auto">
+              {conversations.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <PaperPlaneTilt size={64} weight="thin" className="mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">{t('chat.noConversations')}</p>
                   </div>
                 </div>
-              ))
-            )}
+              ) : (
+                conversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    data-testid={`conversation-${conv.id}`}
+                    onClick={() => selectConversation(conv)}
+                    className="p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50 flex items-center gap-4"
+                  >
+                    <Avatar className="w-14 h-14">
+                      <AvatarImage src={conv.other_user?.avatar_url} alt="avatar" style={{ objectFit: 'cover' }} />
+                      <AvatarFallback>{conv.other_user?.username?.[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold">{conv.other_user?.username}</p>
+                      <p className="text-sm text-muted-foreground truncate">{conv.last_message || 'Start chatting'}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
+      ) : (
+        // Chat Thread - Full Screen
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="max-w-2xl mx-auto w-full h-full flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-border flex items-center gap-4">
+              <Button
+                data-testid="back-to-conversations-btn"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedConv(null)}
+                className="hover:bg-transparent"
+              >
+                <ArrowLeft size={24} weight="regular" />
+              </Button>
 
-        {/* Chat Area - Fixed Layout */}
-        <div className="flex-1 flex flex-col">
-          {selectedConv ? (
-            <>
-              {/* Header - Fixed */}
-              <div className="p-4 border-b border-border flex items-center justify-between bg-card/50">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10 ring-2 ring-primary/20">
-                    <AvatarImage src={selectedConv.other_user?.avatar_url} alt="avatar" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {selectedConv.other_user?.username?.[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p data-testid="chat-user-name" className="font-semibold font-heading">
-                    {selectedConv.other_user?.username}
-                  </p>
-                </div>
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={selectedConv.other_user?.avatar_url} alt="avatar" style={{ objectFit: 'cover' }} />
+                <AvatarFallback>{selectedConv.other_user?.username?.[0]?.toUpperCase()}</AvatarFallback>
+              </Avatar>
 
-                <div className="flex gap-2">
-                  <Button
-                    data-testid="audio-call-btn"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => startCall('audio')}
-                    className="rounded-full hover:scale-110 transition-transform"
-                  >
-                    <Phone size={20} weight="bold" />
-                  </Button>
-                  <Button
-                    data-testid="video-call-btn"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => startCall('video')}
-                    className="rounded-full hover:scale-110 transition-transform"
-                  >
-                    <VideoCamera size={20} weight="bold" />
-                  </Button>
-                </div>
+              <div className="flex-1">
+                <p data-testid="chat-user-name" className="font-semibold">
+                  {selectedConv.other_user?.username}
+                </p>
               </div>
 
-              {/* Messages - Scrollable */}
-              <div data-testid="messages-container" className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => (
+              <div className="flex gap-2">
+                <Button
+                  data-testid="audio-call-btn"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => startCall('audio')}
+                  className="hover:bg-transparent"
+                >
+                  <Phone size={24} weight="regular" />
+                </Button>
+                <Button
+                  data-testid="video-call-btn"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => startCall('video')}
+                  className="hover:bg-transparent"
+                >
+                  <VideoCamera size={24} weight="regular" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div data-testid="messages-container" className="flex-1 overflow-y-auto p-4 space-y-2">
+              {messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-sm text-muted-foreground">No messages yet. Say hi! 👋</p>
+                </div>
+              ) : (
+                messages.map((msg) => (
                   <div
                     key={msg.id}
                     data-testid={`message-${msg.id}`}
                     className={`flex ${msg.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-xs px-4 py-2 rounded-2xl ${
+                      className={`max-w-[70%] px-4 py-2 rounded-3xl ${
                         msg.sender_id === user.id
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-secondary-foreground'
+                          : 'bg-muted text-foreground'
                       }`}
                     >
-                      <p>{msg.content}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-                      </p>
+                      <p className="text-sm">{msg.content}</p>
                     </div>
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input - Fixed */}
-              <form onSubmit={sendMessage} className="p-4 border-t border-border bg-card/50">
-                <div className="flex gap-2">
-                  <Input
-                    data-testid="message-input"
-                    type="text"
-                    placeholder={t('chat.typeMessage')}
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    className="flex-1 rounded-full bg-muted/50"
-                  />
-                  <Button data-testid="send-message-btn" type="submit" size="icon" className="rounded-full hover:scale-110 transition-transform">
-                    <PaperPlaneRight size={20} weight="bold" />
-                  </Button>
-                </div>
-              </form>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-muted-foreground">{t('chat.selectConversation')}</p>
+                ))
+              )}
+              <div ref={messagesEndRef} />
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Call Modal with Animations */}
+            {/* Input */}
+            <form onSubmit={sendMessage} className="p-4 border-t border-border">
+              <div className="flex gap-2 items-center">
+                <Input
+                  data-testid="message-input"
+                  type="text"
+                  placeholder={`Message ${selectedConv.other_user?.username}...`}
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  className="flex-1 rounded-full border-border"
+                />
+                <Button
+                  data-testid="send-message-btn"
+                  type="submit"
+                  disabled={!messageText.trim()}
+                  variant="ghost"
+                  className="hover:bg-transparent"
+                >
+                  <PaperPlaneTilt size={24} weight={messageText.trim() ? 'fill' : 'regular'} />
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Call Modal */}
       <Dialog open={showCallModal} onOpenChange={setShowCallModal}>
-        <DialogContent data-testid="call-modal" className="max-w-4xl glass rounded-3xl border-primary/40">
+        <DialogContent data-testid="call-modal" className="max-w-4xl rounded-3xl border-primary/40">
           <div className="relative">
-            {/* Status Indicator */}
             {!isInCall && (
               <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md animate-pulse">
@@ -474,7 +465,7 @@ const ChatPage = () => {
               data-testid="end-call-btn"
               variant="destructive"
               size="icon"
-              className="absolute top-4 right-4 z-10 rounded-full hover:scale-110 transition-transform"
+              className="absolute top-4 right-4 z-10 rounded-full"
               onClick={endCall}
             >
               <PhoneDisconnect size={20} weight="bold" />
@@ -526,7 +517,7 @@ const ChatPage = () => {
                   <div className={`w-32 h-32 rounded-full bg-primary/30 flex items-center justify-center ${!isInCall ? 'animate-pulse' : ''}`}>
                     <Phone size={64} weight="bold" className="text-primary" />
                   </div>
-                  <p className="text-2xl font-heading">{selectedConv?.other_user?.username}</p>
+                  <p className="text-2xl font-semibold">{selectedConv?.other_user?.username}</p>
                   <p className="text-sm text-muted-foreground">
                     {isInCall ? 'In call...' : t('chat.calling')}
                   </p>
@@ -537,23 +528,23 @@ const ChatPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Incoming Call Modal */}
+      {/* Incoming Call */}
       {incomingCall && (
         <Dialog open={!!incomingCall} onOpenChange={() => declineCall()}>
-          <DialogContent data-testid="incoming-call-modal" className="glass rounded-3xl border-primary/40">
+          <DialogContent data-testid="incoming-call-modal" className="rounded-3xl border-primary/40">
             <div className="text-center space-y-6 py-8">
               <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto animate-pulse">
                 <Phone size={48} weight="bold" className="text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-heading mb-2">{t('chat.incomingCall')}</p>
+                <p className="text-2xl font-semibold mb-2">{t('chat.incomingCall')}</p>
                 <p className="text-muted-foreground">Unknown caller</p>
               </div>
               <div className="flex gap-4 justify-center">
                 <Button
                   data-testid="accept-call-btn"
                   onClick={answerCall}
-                  className="rounded-full px-8 py-6 bg-green-500 hover:bg-green-600 hover:scale-110 transition-transform"
+                  className="rounded-full px-8 py-6 bg-green-500 hover:bg-green-600"
                 >
                   <Phone size={24} weight="bold" />
                   <span className="ml-2">{t('chat.accept')}</span>
@@ -562,7 +553,7 @@ const ChatPage = () => {
                   data-testid="decline-call-btn"
                   onClick={declineCall}
                   variant="destructive"
-                  className="rounded-full px-8 py-6 hover:scale-110 transition-transform"
+                  className="rounded-full px-8 py-6"
                 >
                   <PhoneDisconnect size={24} weight="bold" />
                   <span className="ml-2">{t('chat.decline')}</span>
