@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, UserMinus, PencilSimple, Phone, VideoCamera, ChatCircle } from '@phosphor-icons/react';
+import { UserPlus, UserMinus, PencilSimple, ChatCircle, Phone } from '@phosphor-icons/react';
 import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
@@ -99,10 +99,8 @@ const ProfilePage = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="text-center py-12">
-          <div className="glow-pulse inline-block">
-            <p className="text-muted-foreground font-heading text-xl">{t('common.loading')}</p>
-          </div>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -112,7 +110,7 @@ const ProfilePage = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="text-center py-12">
+        <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">Profile not found</p>
         </div>
       </div>
@@ -124,121 +122,144 @@ const ProfilePage = () => {
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Card className="glass rounded-3xl border-border/40">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-start gap-8">
-              <div className="relative">
-                <Avatar data-testid="profile-avatar" className="w-32 h-32 ring-4 ring-primary/20">
-                  <AvatarImage src={profile.avatar_url} alt="avatar" className="object-cover" />
-                  <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
-                    {profile.username?.[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                {isOwnProfile && (
-                  <Button
-                    data-testid="upload-avatar-btn"
-                    size="icon"
-                    className="absolute bottom-0 right-0 rounded-full hover:scale-110 transition-transform"
-                    onClick={() => document.getElementById('avatar-upload').click()}
-                  >
-                    <PencilSimple size={16} weight="bold" />
-                  </Button>
-                )}
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                />
-              </div>
+        {/* Cover with gradient */}
+        <div className="h-48 rounded-t-3xl gradient-blue-green relative">
+          <div className="absolute -bottom-16 left-8">
+            <div className="relative">
+              <Avatar data-testid="profile-avatar" className="w-32 h-32 ring-4 ring-background">
+                <AvatarImage src={profile.avatar_url} alt="avatar" />
+                <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
+                  {profile.username?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {isOwnProfile && (
+                <Button
+                  data-testid="upload-avatar-btn"
+                  size="icon"
+                  className="absolute bottom-0 right-0 rounded-full w-10 h-10"
+                  onClick={() => document.getElementById('avatar-upload').click()}
+                >
+                  <PencilSimple size={18} weight="bold" />
+                </Button>
+              )}
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+            </div>
+          </div>
+        </div>
 
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h1 data-testid="profile-username" className="text-4xl font-bold font-heading tracking-tighter uppercase">
-                      {profile.username}
-                    </h1>
-                    <p data-testid="profile-email" className="text-muted-foreground font-mono mt-1">
-                      {profile.email}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {isOwnProfile ? (
-                      <Button
-                        data-testid="edit-profile-btn"
-                        onClick={() => setShowEditModal(true)}
-                        className="rounded-full gap-2 hover:scale-105 transition-transform"
-                      >
-                        <PencilSimple size={18} weight="bold" />
-                        {t('profile.editProfile')}
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          data-testid="follow-btn"
-                          onClick={handleFollow}
-                          variant={profile.is_following ? 'outline' : 'default'}
-                          className="rounded-full gap-2 hover:scale-105 transition-transform"
-                        >
-                          {profile.is_following ? (
-                            <>
-                              <UserMinus size={18} weight="bold" />
-                              {t('profile.unfollow')}
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus size={18} weight="bold" />
-                              {t('profile.follow')}
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          data-testid="message-user-btn"
-                          onClick={handleMessage}
-                          variant="outline"
-                          size="icon"
-                          className="rounded-full hover:scale-110 transition-transform"
-                        >
-                          <ChatCircle size={20} weight="bold" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <p data-testid="profile-bio" className="mt-4 text-foreground leading-relaxed">
-                  {profile.bio || t('profile.noBio')}
+        <Card className="rounded-t-none rounded-b-3xl border-t-0">
+          <CardContent className="pt-20 pb-8">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h1 data-testid="profile-username" className="text-3xl font-bold mb-2">
+                  {profile.username}
+                </h1>
+                <p data-testid="profile-email" className="text-muted-foreground">
+                  {profile.email}
                 </p>
-
-                <div className="flex gap-6 mt-6">
-                  <div data-testid="followers-count">
-                    <span className="font-bold font-heading text-xl">{profile.followers_count || 0}</span>
-                    <span className="text-muted-foreground ml-2">{t('profile.followers')}</span>
-                  </div>
-                  <div data-testid="following-count">
-                    <span className="font-bold font-heading text-xl">{profile.following_count || 0}</span>
-                    <span className="text-muted-foreground ml-2">{t('profile.following')}</span>
-                  </div>
-                </div>
               </div>
+
+              <div className="flex gap-2">
+                {isOwnProfile ? (
+                  <Button
+                    data-testid="edit-profile-btn"
+                    onClick={() => setShowEditModal(true)}
+                    className="rounded-full gap-2"
+                  >
+                    <PencilSimple size={18} weight="bold" />
+                    {t('profile.editProfile')}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      data-testid="follow-btn"
+                      onClick={handleFollow}
+                      className="rounded-full gap-2"
+                      variant={profile.is_following ? 'outline' : 'default'}
+                    >
+                      {profile.is_following ? (
+                        <>
+                          <UserMinus size={18} weight="bold" />
+                          {t('profile.unfollow')}
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={18} weight="bold" />
+                          {t('profile.follow')}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      data-testid="message-user-btn"
+                      onClick={handleMessage}
+                      variant="outline"
+                      className="rounded-full"
+                    >
+                      <ChatCircle size={20} weight="bold" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <p data-testid="profile-bio" className="text-foreground mb-6 text-lg">
+              {profile.bio || t('profile.noBio')}
+            </p>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="bg-muted/50">
+                <CardContent className="p-4 text-center">
+                  <div data-testid="followers-count" className="text-2xl font-bold">
+                    {profile.followers_count || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{t('profile.followers')}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/50">
+                <CardContent className="p-4 text-center">
+                  <div data-testid="following-count" className="text-2xl font-bold">
+                    {profile.following_count || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{t('profile.following')}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-primary/10">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-sm text-muted-foreground">Posts</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-secondary/10">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-sm text-muted-foreground">Likes</div>
+                </CardContent>
+              </Card>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Edit Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent data-testid="edit-profile-modal" className="sm:max-w-[500px] glass rounded-3xl border-border/40">
+        <DialogContent data-testid="edit-profile-modal" className="sm:max-w-[500px] rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-heading tracking-tight">{t('profile.editProfile')}</DialogTitle>
+            <DialogTitle className="text-2xl">{t('profile.editProfile')}</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <label className="text-sm font-medium font-mono uppercase tracking-wider opacity-60">
-                {t('auth.username')}
-              </label>
+              <label className="text-sm font-medium">{t('auth.username')}</label>
               <Input
                 data-testid="edit-username-input"
                 type="text"
@@ -249,9 +270,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium font-mono uppercase tracking-wider opacity-60">
-                {t('profile.bio')}
-              </label>
+              <label className="text-sm font-medium">{t('profile.bio')}</label>
               <Textarea
                 data-testid="edit-bio-input"
                 value={editData.bio}
@@ -264,7 +283,7 @@ const ProfilePage = () => {
             <Button
               data-testid="save-profile-btn"
               type="submit"
-              className="w-full rounded-full hover:scale-105 transition-transform"
+              className="w-full rounded-full"
             >
               {t('profile.saveChanges')}
             </Button>

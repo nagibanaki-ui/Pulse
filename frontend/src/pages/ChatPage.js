@@ -12,6 +12,7 @@ import api, { BACKEND_URL } from '../api';
 import { useAuth } from '../AuthContext';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { createSoftRingtone, playConnectedSound } from '../utils/audioUtils';
 
 const ChatPage = () => {
   const { t } = useTranslation();
@@ -37,6 +38,9 @@ const ChatPage = () => {
   useEffect(() => {
     loadConversations();
     initSocket();
+    
+    // Initialize soft ringtone
+    ringtoneRef.current = createSoftRingtone();
     
     return () => {
       if (socketRef.current?.connected) {
@@ -135,11 +139,7 @@ const ChatPage = () => {
 
   const playRingtone = () => {
     try {
-      if (!ringtoneRef.current) {
-        ringtoneRef.current = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-        ringtoneRef.current.loop = true;
-      }
-      ringtoneRef.current.play().catch(console.error);
+      ringtoneRef.current?.play();
     } catch (e) {
       console.error('Ringtone error:', e);
     }
@@ -147,10 +147,7 @@ const ChatPage = () => {
 
   const stopRingtone = () => {
     try {
-      if (ringtoneRef.current) {
-        ringtoneRef.current.pause();
-        ringtoneRef.current.currentTime = 0;
-      }
+      ringtoneRef.current?.stop();
     } catch (e) {
       console.error('Stop ringtone error:', e);
     }
@@ -271,6 +268,7 @@ const ChatPage = () => {
         if (pc.iceConnectionState === 'connected') {
           setIsInCall(true);
           stopRingtone();
+          playConnectedSound(); // Soft connected sound
           toast.success('Call connected!');
         } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
           endCall();
